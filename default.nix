@@ -16,6 +16,6 @@ cabal.mkDerivation (self: {
   src = if devel then ./. else pkgs.fetchgit { url = ./.; };
 
   buildDepends = [
-    hs.cabalInstall hs.free pkgs.openssh
+    hs.cabalInstall hs.free pkgs.openssh hs.processExtras
   ];
 })

@@ -7,7 +7,6 @@ import           Prelude                  hiding (readFile, writeFile)
 import           Handsy
 
 import qualified Data.ByteString.Char8    as B
-import           System.Process
 
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Free
