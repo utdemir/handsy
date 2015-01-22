@@ -5,16 +5,17 @@
 
 module Handsy where
 
-import           Prelude                hiding (readFile, writeFile)
+import           Prelude                  hiding (readFile, writeFile)
 
 import           Control.Monad
 import           Control.Monad.IO.Class
-import qualified Data.ByteString.Char8  as B
+import qualified Data.ByteString.Char8    as B
 import           System.Exit
 import           System.Process
 
-import           Control.Monad.Free
+-- import           Control.Monad.Free
 import           Control.Monad.Free.TH
+import           Control.Monad.Trans.Free
 
 -- | Base functor for our dsl
 data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
@@ -22,33 +23,24 @@ data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteStr
                | WriteFile    String B.ByteString          (() -> k)
              deriving (Functor)
 
-type Handsy = Free HandsyF
-
 makeFree ''HandsyF
 
-run :: MonadIO m => Handsy a -> m a
-run = iterM go
-  where
-    go :: (MonadIO m) => HandsyF (m a) -> m a
-    go (Command prg args stdin next) = do
-      -- TODO: Don't use this function --v and use B.hGetContents
-      (c, i, e) <- liftIO $ readProcessWithExitCode prg args (B.unpack stdin)
-      next (c, B.pack i, B.pack e)
-    go (ReadFile fp next) = (liftIO $ B.readFile fp) >>= next
-    go (WriteFile fp str next) = (liftIO $ B.writeFile fp str) >>= next
+type Handsy = FreeT HandsyF IO
 
-copyFile :: FilePath -> FilePath -> Handsy ()
-copyFile src dest = void $ command "cp" [src, dest] ""
+run :: Handsy a -> IO a
+run h = do
+  x <- runFreeT h
+  case x of
+    Pure r -> return r
+    Free (ReadFile fp next) -> B.readFile fp >>= run . next
+    Free (WriteFile fp str next) -> B.writeFile fp str >>= run . next
+    Free (Command prg args stdin next) -> do
+      (c, i, e) <- readProcessWithExitCode prg args (B.unpack stdin)
+      run (next (c, B.pack i, B.pack e))
 
--- Sample Program
 test :: Handsy B.ByteString
 test = do
-  (_, uptime, _) <- command "uptime" [] ""
-  writeFile "/tmp/uptime" uptime
-  readFile "/tmp/uptime"
-
--- Sample Interpretation
-main :: IO ()
-main = run test >>= print
-
+  (_, hostname, _) <- command "hostname" [] ""
+  liftIO $ B.writeFile "/tmp/hostname" hostname
+  liftIO $ B.readFile "/tmp/hostname"
 
