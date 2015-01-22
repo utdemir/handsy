@@ -1,0 +1,24 @@
+name:                handsy
+version:             0.0.1
+-- synopsis:            
+-- description:         
+license:             BSD3
+author:              Utku Demir
+maintainer:          utdemir@gmail.com
+-- copyright:           
+category:            System
+build-type:          Simple
+-- extra-source-files:  
+cabal-version:       >=1.10
+
+library
+  exposed-modules:  Handsy
+                    Handsy.Remote
+  build-depends:    base >=4.7 && <4.8
+                  , bytestring
+                  , process
+                  , transformers
+                  , free
+                    
+  hs-source-dirs:   src
+  default-language: Haskell2010
