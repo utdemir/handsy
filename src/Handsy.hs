@@ -36,10 +36,3 @@ run h = do
       -> B.writeFile fp str >>= run . next
     Free (Command prg args stdin next)
       -> readProcessWithExitCode prg args stdin >>= run . next
-
-test :: Handsy B.ByteString
-test = do
-  (_, hostname, _) <- command "hostname" [] ""
-  liftIO $ B.writeFile "/tmp/hostname" hostname
-  liftIO $ B.readFile "/tmp/hostname"
-
