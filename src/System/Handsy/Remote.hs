@@ -10,9 +10,10 @@ import           Control.Monad.Trans.Free
 
 data RemoteOptions =
   RemoteOptions {
-    sshCommand :: (String, [String])
+    sshCommand :: (FilePath, [String])
   }
 
+-- | Executes the actions at a remote host
 runRemote :: RemoteOptions -> Handsy a -> IO a
 runRemote opts h = do
   x <- runFreeT h

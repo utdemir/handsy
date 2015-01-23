@@ -13,17 +13,26 @@ import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
--- | Base functor for our dsl
-data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
-               | ReadFile     String                       (B.ByteString -> k)
-               | WriteFile    String B.ByteString          (() -> k)
-               | AppendFile   String B.ByteString          (() -> k)
-             deriving (Functor)
+-- * Types
+data HandsyF k =
+    Command      FilePath [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
+  | ReadFile     FilePath                       (B.ByteString -> k)
+  | WriteFile    FilePath B.ByteString          (() -> k)
+  | AppendFile   FilePath B.ByteString          (() -> k)
+  deriving (Functor)
 
 type Handsy = FreeT HandsyF IO
 
+-- * TH generated actions
 makeFree ''HandsyF
 
+-- * Helpers
+shell :: String -> Handsy (ExitCode, B.ByteString, B.ByteString)
+shell cmd = command "/usr/bin/env" ["sh", "-c", cmd] ""
+
+-- * Interpreter
+
+-- | Executes the actions locally
 run :: Handsy a -> IO a
 run h = do
   x <- runFreeT h
@@ -38,5 +47,3 @@ run h = do
     Free (Command prg args stdin next)
       -> readProcessWithExitCode prg args stdin >>= run . next
 
-shell :: String -> Handsy (ExitCode, B.ByteString, B.ByteString)
-shell cmd = command "/usr/bin/env" ["sh", "-c", cmd] ""
