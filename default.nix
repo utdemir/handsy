@@ -9,7 +9,7 @@ in
 
 hs.mkDerivation {
   pname = "handsy";
-  version = "0.1";
+  version = "0.0.3";
   license = "unknown";
   isLibrary = true;
   src = ./.;
