@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Handsy where
+module System.Handsy where
 
 import           Prelude                   hiding (readFile, writeFile)
 

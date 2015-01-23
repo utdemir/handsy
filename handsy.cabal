@@ -1,6 +1,7 @@
 name:          handsy
 version:       0.0.1
-description:   A DSL to describe common shell operations and interpeters for running them locally and remotely.
+synopsis:      A DSL to describe common shell operations and interpeters for running them locally and remotely.
+description:   
 license:       BSD3
 author:        Utku Demir
 maintainer:    utdemir@gmail.com
@@ -13,8 +14,8 @@ source-repository head
   location: https://github.com/utdemir/master
 
 library
-  exposed-modules:  Handsy
-                    Handsy.Remote
+  exposed-modules:  System.Handsy
+                    System.Handsy.Remote
   build-depends:    base >=4.7 && <4.8
                   , bytestring
                   , process

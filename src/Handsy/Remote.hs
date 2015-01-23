@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Handsy.Remote where
+module System.Handsy.Remote where
 
 import           Prelude                  hiding (readFile, writeFile)
 
