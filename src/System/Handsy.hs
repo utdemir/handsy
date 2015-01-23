@@ -21,9 +21,9 @@ data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteStr
                | WriteFile    String B.ByteString          (() -> k)
              deriving (Functor)
 
-makeFree ''HandsyF
-
 type Handsy = FreeT HandsyF IO
+
+makeFree ''HandsyF
 
 run :: Handsy a -> IO a
 run h = do
