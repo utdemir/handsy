@@ -1,21 +1,20 @@
 { nixpkgsSrc ? { outPath = ../nixpkgs; revCount = 1234; gitTag = "dirty"; } 
 , system ? "x86_64-linux"
-, devel ? true
 }:
 
 let
     pkgs = (import nixpkgsSrc { inherit system; });
-    hs = pkgs.haskellPackages;
-    inherit (hs) cabal;
+    hs = pkgs.haskellngPackages;
 in
 
-cabal.mkDerivation (self: {
+hs.mkDerivation {
   pname = "handsy";
   version = "0.1";
+  license = "unknown";
   isLibrary = true;
-  src = if devel then ./. else pkgs.fetchgit { url = ./.; };
-
+  src = ./.;
+  
   buildDepends = [
-    hs.cabalInstall hs.free pkgs.openssh hs.processExtras
+    hs.base hs.cabal-install hs.free hs.process-extras
   ];
-})
+}
