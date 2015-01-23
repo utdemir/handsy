@@ -4,7 +4,7 @@ module System.Handsy.Remote where
 
 import           Prelude                  hiding (readFile, writeFile)
 
-import           Handsy
+import           System.Handsy
 
 import qualified Data.ByteString.Char8    as B
 
