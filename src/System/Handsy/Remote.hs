@@ -32,3 +32,9 @@ runRemote opts h = do
   where
     (ssh, sshOpts) = sshCommand opts
     runSsh prg args stdin = run (command ssh (sshOpts ++ prg : args) stdin)
+
+pushFile :: FilePath -> FilePath -> Handsy ()
+pushFile local remote = liftIO (B.readFile local) >>= writeFile remote
+
+pullFile :: FilePath -> FilePath -> Handsy ()
+pullFile remote local = readFile remote >>= liftIO . B.writeFile local
