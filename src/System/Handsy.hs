@@ -24,11 +24,19 @@ data HandsyF k =
 type Handsy = FreeT HandsyF IO
 
 -- * TH generated actions
+
 makeFree ''HandsyF
 
 -- * Helpers
-shell :: String -> Handsy (ExitCode, B.ByteString, B.ByteString)
-shell cmd = command "/usr/bin/env" ["sh", "-c", cmd] ""
+
+{-| Executes the given string in shell
+
+  > shell cmd stdin = command "/usr/bin/env" ["sh", "-c", cmd] stdin
+-}
+shell :: String       -- ^ String to execute
+      -> B.ByteString -- ^ Standart input
+      -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (ExitCode, Stdout, Stderr)
+shell cmd stdin = command "/usr/bin/env" ["sh", "-c", cmd] stdin
 
 -- * Interpreter
 
