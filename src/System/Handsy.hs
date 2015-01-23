@@ -36,3 +36,6 @@ run h = do
       -> B.writeFile fp str >>= run . next
     Free (Command prg args stdin next)
       -> readProcessWithExitCode prg args stdin >>= run . next
+
+shell :: String -> Handsy (ExitCode, B.ByteString, B.ByteString)
+shell cmd = command "/usr/bin/env" ["sh", "-c", cmd] ""
