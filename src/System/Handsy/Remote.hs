@@ -32,11 +32,13 @@ runRemote opts h = do
     (ssh, sshOpts) = sshCommand opts
     runSsh prg args stdin = run (command ssh (sshOpts ++ prg : args) stdin)
 
+-- | Copies a local file to remote host
 pushFile :: FilePath -- ^ Local path of source
          -> FilePath -- ^ Remote path of destination
          -> Handsy ()
 pushFile local remote = liftIO (B.readFile local) >>= H.writeFile remote
 
+-- | Fetches a file from remote host
 pullFile :: FilePath -- ^ Remote path of source
          -> FilePath -- ^ Local path of destination
          -> Handsy ()
