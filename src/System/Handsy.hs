@@ -5,15 +5,15 @@
 
 module System.Handsy where
 
-import           Prelude                   hiding (readFile, writeFile)
+import           Prelude                        hiding (readFile, writeFile)
 
 import           Control.Monad.IO.Class
-import qualified Data.ByteString.Char8     as B
+import qualified Data.ByteString.Lazy           as B
 import           System.Exit
 
 import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
-import           System.Process.ByteString
+import           System.Process.ByteString.Lazy
 
 -- | Base functor for our dsl
 data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
