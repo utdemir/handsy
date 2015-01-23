@@ -1,10 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module System.Handsy.Remote where
 
-import           Prelude                  hiding (readFile, writeFile)
-
-import           System.Handsy
+import           System.Handsy            as H
 
 import qualified Data.ByteString.Lazy     as B
 
@@ -21,20 +18,21 @@ runRemote opts h = do
   x <- runFreeT h
   case x of
     Pure r -> return r
-    Free (ReadFile fp next) -> do
-      (_, stdin,  _) <- runSsh "cat" [fp] ""
-      runRemote opts (next stdin)
-    Free (WriteFile fp str next) -> do
-      _ <- runSsh "dd" ["of=" ++ fp] str -- TODO: Escape necessary?
-      runRemote opts (next ())
-    Free (Command prg args stdin next) -> runSsh prg args stdin >>= run . next
+    Free (ReadFile fp next)
+      -> runSsh "cat" [fp] "" >>= \(_, stdin, _) -> runRemote opts (next stdin)
+    Free (WriteFile fp str next)
+      -> runSsh "dd" ["of=" ++ fp] str >> runRemote opts (next ())
+    Free (AppendFile fp str next)
+      -> runSsh "dd" ["of=" ++ fp, "conv=notrunc", "oflag=append"] str >> runRemote opts (next ())
+    Free (Command prg args stdin next)
+      -> runSsh prg args stdin >>= runRemote opts . next
 
   where
     (ssh, sshOpts) = sshCommand opts
     runSsh prg args stdin = run (command ssh (sshOpts ++ prg : args) stdin)
 
 pushFile :: FilePath -> FilePath -> Handsy ()
-pushFile local remote = liftIO (B.readFile local) >>= writeFile remote
+pushFile local remote = liftIO (B.readFile local) >>= H.writeFile remote
 
 pullFile :: FilePath -> FilePath -> Handsy ()
-pullFile remote local = readFile remote >>= liftIO . B.writeFile local
+pullFile remote local = H.readFile remote >>= liftIO . B.writeFile local

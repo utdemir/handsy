@@ -5,8 +5,6 @@
 
 module System.Handsy where
 
-import           Prelude                        hiding (readFile, writeFile)
-
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy           as B
 import           System.Exit
@@ -19,6 +17,7 @@ import           System.Process.ByteString.Lazy
 data HandsyF k = Command      String [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
                | ReadFile     String                       (B.ByteString -> k)
                | WriteFile    String B.ByteString          (() -> k)
+               | AppendFile   String B.ByteString          (() -> k)
              deriving (Functor)
 
 type Handsy = FreeT HandsyF IO
@@ -34,6 +33,8 @@ run h = do
       -> B.readFile fp >>= run . next
     Free (WriteFile fp str next)
       -> B.writeFile fp str >>= run . next
+    Free (AppendFile fp str next)
+      -> B.appendFile fp str >>= run . next
     Free (Command prg args stdin next)
       -> readProcessWithExitCode prg args stdin >>= run . next
 
