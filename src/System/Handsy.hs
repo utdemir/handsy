@@ -1,7 +1,4 @@
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
 
 module System.Handsy where
 
@@ -13,19 +10,31 @@ import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
--- * Types
-data HandsyF k =
-    Command      FilePath [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
-  | ReadFile     FilePath                       (B.ByteString -> k)
-  | WriteFile    FilePath B.ByteString          (() -> k)
-  | AppendFile   FilePath B.ByteString          (() -> k)
-  deriving (Functor)
+import           System.Handsy.Internal         (HandsyF (..))
+import qualified System.Handsy.Internal         as T
 
-type Handsy = FreeT HandsyF IO
+type Handsy = FreeT T.HandsyF IO
 
--- * TH generated actions
+-- * Actions
 
-makeFree ''HandsyF
+-- | Runs a command
+command :: FilePath     -- ^ Command to run
+        -> [String]     -- ^ Arguments
+        -> B.ByteString -- ^ Standart Input
+        -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (status, stdout, stderr)
+command = T.command
+
+-- | Reads a file and returns the contents of the file.
+readFile :: FilePath -> Handsy B.ByteString
+readFile = T.readFile
+
+-- | 'writeFile' @file str@ function writes the bytestring @str@, to the file @file@.
+writeFile :: FilePath -> B.ByteString -> Handsy ()
+writeFile = T.writeFile
+
+-- | 'appendFile' @file str@ function appends the bytestring @str@, to the file @file@.
+appendFile :: FilePath -> B.ByteString -> Handsy ()
+appendFile = T.appendFile
 
 -- * Helpers
 

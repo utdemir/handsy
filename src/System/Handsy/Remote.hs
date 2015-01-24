@@ -2,6 +2,7 @@
 module System.Handsy.Remote where
 
 import           System.Handsy            as H
+import           System.Handsy.Internal   (HandsyF (..))
 
 import qualified Data.ByteString.Lazy     as B
 
