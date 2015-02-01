@@ -3,12 +3,10 @@
 
 module System.Handsy where
 
-import           Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy           as B
 import qualified Data.ByteString.Lazy.Char8     as C
 import           System.Exit
 
-import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
