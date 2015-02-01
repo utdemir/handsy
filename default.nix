@@ -15,6 +15,6 @@ hs.mkDerivation {
   src = ./.;
   
   buildDepends = [
-    hs.base hs.cabal-install hs.free hs.process-extras
+    hs.base hs.cabal-install hs.free hs.process-extras hs.shell-escape
   ];
 }

@@ -4,14 +4,18 @@ module System.Handsy.Remote where
 import           System.Handsy            as H
 import           System.Handsy.Internal   (HandsyF (..))
 
+import qualified Data.ByteString.Char8    as C8
 import qualified Data.ByteString.Lazy     as B
+import           System.Exit
 
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Free
 
+import           Text.ShellEscape
+
 data RemoteOptions =
   RemoteOptions {
-    sshCommand :: (FilePath, [String])
+    sshCommand :: (String, [String])
   }
 
 -- | Executes the actions at a remote host
@@ -30,8 +34,10 @@ runRemote opts h = do
       -> runSsh prg args stdin >>= runRemote opts . next
 
   where
-    (ssh, sshOpts) = sshCommand opts
-    runSsh prg args stdin = run (command ssh (sshOpts ++ prg : args) stdin)
+    runSsh :: String -> [String] -> B.ByteString -> IO (ExitCode, B.ByteString, B.ByteString)
+    runSsh prg args stdin = let c = C8.unpack . C8.intercalate " " . map (bytes . bash . C8.pack) $ (prg:args)
+                                (ssh, sshOpts) = sshCommand opts
+                            in run $ command ssh (sshOpts ++ [c]) stdin
 
 -- | Copies a local file to remote host
 pushFile :: FilePath -- ^ Local path of source
