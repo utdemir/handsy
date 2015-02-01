@@ -47,6 +47,20 @@ shell :: String       -- ^ String to execute
       -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (ExitCode, Stdout, Stderr)
 shell cmd stdin = command "/usr/bin/env" ["sh", "-c", cmd] stdin
 
+-- | Same as 'shell', but ExitFailure is a runtime error.
+shell_ :: String  -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
+shell_ cmd stdin = shell cmd stdin >>= \case
+  (ExitFailure code, _, stderr) -> error ('`':cmd ++ "` returned " ++ show code
+                                       ++ "\nStderr was: " ++ (C.unpack stderr))
+  (ExitSuccess, stdout, stderr) -> return (stdout, stderr)
+
+-- | Same as 'command', but ExitFailure is a runtime error.
+command_ :: FilePath -> [String] -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
+command_ path args stdin = command path args stdin >>= \case
+  (ExitFailure code, _, stderr) -> error ('`':path ++ ' ' :(show args) ++ "` returned " ++ show code
+                                       ++ "\nStderr was: " ++ (C.unpack stderr))
+  (ExitSuccess, stdout, stderr) -> return (stdout, stderr)
+
 -- * Interpreter
 
 -- | Executes the actions locally
