@@ -3,3 +3,12 @@ language: haskell
 ghc:
   - 7.8
   - 7.6
+deploy:
+  provider: hackage
+  username: utdemir
+  password:
+    secure: YgOxLAmItuVIZL/9GW7iQzp4/qwQoWRUzjGjnFADnrNgWxM1kqzRuiut4dCXIJS2Fqbw1k5U9/7asP4DGGcgNi1ZiZZdC+HCfUbfSdY69Xx6Q15WJzg8PfDGJcdfT1M7o+1rFZ4FzKBeWq5c3FeKr3BVTnw+fRcyeexWcQaf+4M=
+  on:
+    tags: true
+    all_branches: true
+    repo: utdemir/handsy
