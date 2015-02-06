@@ -1,7 +1,10 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module System.Handsy where
+module System.Handsy
+  ( module System.Handsy
+  , Handsy
+  ) where
 
 import qualified Data.ByteString.Lazy           as B
 import qualified Data.ByteString.Lazy.Char8     as C
@@ -10,10 +13,8 @@ import           System.Exit
 import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
-import           System.Handsy.Internal         (HandsyF (..))
-import qualified System.Handsy.Internal         as T
-
-type Handsy = FreeT T.HandsyF IO
+import           System.Handsy.Internal         hiding (command)
+import qualified System.Handsy.Internal         as I
 
 -- * Actions
 
@@ -22,19 +23,25 @@ command :: FilePath     -- ^ Command to run
         -> [String]     -- ^ Arguments
         -> B.ByteString -- ^ Standart Input
         -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (status, stdout, stderr)
-command = T.command
+command = I.command
 
 -- | Reads a file and returns the contents of the file.
 readFile :: FilePath -> Handsy B.ByteString
-readFile = T.readFile
+readFile fp = command "cat" [fp] "" >>= \case
+  (ExitSuccess, stdin, _) -> return stdin
+  _                       -> error $ "Error reading " ++ fp
 
--- | 'writeFile' @file str@ function writes the bytestring @str@, to the file @file@.
+-- | @writeFile file str@ function writes the bytestring @str@, to the file @file@.
 writeFile :: FilePath -> B.ByteString -> Handsy ()
-writeFile = T.writeFile
+writeFile fp s = command "dd" ["of=" ++ fp] s >>= \case
+  (ExitSuccess, stdin, _) -> return ()
+  _                       -> error $ "Error writing to " ++ fp
 
--- | 'appendFile' @file str@ function appends the bytestring @str@, to the file @file@.
+-- | @appendFile file str@ function appends the bytestring @str@, to the file @file@.
 appendFile :: FilePath -> B.ByteString -> Handsy ()
-appendFile = T.appendFile
+appendFile fp s = command "dd" ["of=" ++ fp, "conv=notrunc", "oflag=append"] s >>= \case
+  (ExitSuccess, stdin, _) -> return ()
+  _                       -> error $ "Error appending to " ++ fp
 
 -- * Helpers
 
@@ -63,18 +70,5 @@ command_ path args stdin = command path args stdin >>= \case
 
 -- * Interpreter
 
--- | Executes the actions locally
 run :: Handsy a -> IO a
-run h = do
-  x <- runFreeT h
-  case x of
-    Pure r -> return r
-    Free (ReadFile fp next)
-      -> B.readFile fp >>= run . next
-    Free (WriteFile fp str next)
-      -> B.writeFile fp str >>= run . next
-    Free (AppendFile fp str next)
-      -> B.appendFile fp str >>= run . next
-    Free (Command prg args stdin next)
-      -> readProcessWithExitCode prg args stdin >>= run . next
-
+run = interpretSimple readProcessWithExitCode
