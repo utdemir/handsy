@@ -2,24 +2,39 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module System.Handsy
-  ( module System.Handsy
-  , Handsy
-  , Options
+  ( Handsy
+  , run
+
+  -- * Commands
+  , command
+  , readFile
+  , writeFile
+  , appendFile
+  , shell
+
+  -- * Helpers
+  , command_
+  , shell_
+
+  -- * Options
+  , Options (..)
   , options
-  , debug
+
   ) where
+
+import           Prelude                        hiding (appendFile, readFile,
+                                                 writeFile)
 
 import qualified Data.ByteString.Lazy           as B
 import qualified Data.ByteString.Lazy.Char8     as C
 import           System.Exit
 
-import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
 import           System.Handsy.Core             hiding (command)
 import qualified System.Handsy.Core             as I
 
--- * Actions
+-- * Commands
 
 -- | Runs a command
 command :: FilePath     -- ^ Command to run
@@ -37,16 +52,14 @@ readFile fp = command "cat" [fp] "" >>= \case
 -- | @writeFile file str@ function writes the bytestring @str@, to the file @file@.
 writeFile :: FilePath -> B.ByteString -> Handsy ()
 writeFile fp s = command "dd" ["of=" ++ fp] s >>= \case
-  (ExitSuccess, stdin, _) -> return ()
-  _                       -> error $ "Error writing to " ++ fp
+  (ExitSuccess, _, _) -> return ()
+  _                   -> error $ "Error writing to " ++ fp
 
 -- | @appendFile file str@ function appends the bytestring @str@, to the file @file@.
 appendFile :: FilePath -> B.ByteString -> Handsy ()
 appendFile fp s = command "dd" ["of=" ++ fp, "conv=notrunc", "oflag=append"] s >>= \case
-  (ExitSuccess, stdin, _) -> return ()
-  _                       -> error $ "Error appending to " ++ fp
-
--- * Helpers
+  (ExitSuccess, _, _) -> return ()
+  _                   -> error $ "Error appending to " ++ fp
 
 {-| Executes the given string in shell
 
@@ -57,13 +70,6 @@ shell :: String       -- ^ String to execute
       -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (ExitCode, Stdout, Stderr)
 shell cmd stdin = command "/usr/bin/env" ["sh", "-c", cmd] stdin
 
--- | Same as 'shell', but ExitFailure is a runtime error.
-shell_ :: String  -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
-shell_ cmd stdin = shell cmd stdin >>= \case
-  (ExitFailure code, _, stderr) -> error ('`':cmd ++ "` returned " ++ show code
-                                       ++ "\nStderr was: " ++ (C.unpack stderr))
-  (ExitSuccess, stdout, stderr) -> return (stdout, stderr)
-
 -- | Same as 'command', but ExitFailure is a runtime error.
 command_ :: FilePath -> [String] -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
 command_ path args stdin = command path args stdin >>= \case
@@ -71,7 +77,13 @@ command_ path args stdin = command path args stdin >>= \case
                                        ++ "\nStderr was: " ++ (C.unpack stderr))
   (ExitSuccess, stdout, stderr) -> return (stdout, stderr)
 
--- * Interpreter
+-- | Same as 'shell', but ExitFailure is a runtime error.
+shell_ :: String  -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
+shell_ cmd stdin = shell cmd stdin >>= \case
+  (ExitFailure code, _, stderr) -> error ('`':cmd ++ "` returned " ++ show code
+                                       ++ "\nStderr was: " ++ (C.unpack stderr))
+  (ExitSuccess, stdout, stderr) -> return (stdout, stderr)
 
+-- | Executes the actions locally
 run :: Options -> Handsy a -> IO a
 run = interpretSimple readProcessWithExitCode

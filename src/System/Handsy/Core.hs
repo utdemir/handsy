@@ -7,9 +7,8 @@ module System.Handsy.Core
   , interpret
   , interpretSimple
   , command
-  , Options
+  , Options (..)
   , options
-  , debug
   ) where
 
 import           Control.Exception        (bracket)
@@ -18,7 +17,7 @@ import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
 import qualified Data.ByteString.Lazy     as B
 import           System.Exit
-import           System.IO
+import           System.IO                (hPutStrLn, stderr)
 
 data HandsyF k =
     Command      FilePath [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
@@ -26,14 +25,16 @@ data HandsyF k =
 
 makeFree ''HandsyF
 
+-- | Main monad
 type Handsy = FreeT HandsyF IO
 
 data Options =
   Options { debug :: Bool -- ^ Log commands to stderr before running
           }
 
+-- | Default options
 options :: Options
-options = Options True
+options = Options False
 
 interpret :: IO r         -- ^ Acquire resource
           -> (r -> IO ()) -- ^ Release resource

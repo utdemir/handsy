@@ -1,24 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module System.Handsy.Remote where
 
-import           Prelude                  hiding (appendFile, readFile,
-                                           writeFile)
+import           Prelude                hiding (appendFile, readFile, writeFile)
 
 import           System.Handsy
-import           System.Handsy.Core       (interpretSimple)
+import           System.Handsy.Core     (interpretSimple)
 
-import qualified Data.ByteString.Char8    as C8
-import qualified Data.ByteString.Lazy     as B
+import qualified Data.ByteString.Char8  as C8
+import qualified Data.ByteString.Lazy   as B
 import           System.Exit
 
 import           Control.Monad.IO.Class
-import           Control.Monad.Trans.Free
 
 import           Text.ShellEscape
 
 data RemoteOptions =
   RemoteOptions {
-    sshCommand :: (String, [String])
+    -- | Path of `ssh` command and command line arguments
+    sshCommand :: (FilePath, [String])
   }
 
 -- | Executes the actions at a remote host
