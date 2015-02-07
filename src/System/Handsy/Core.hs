@@ -43,14 +43,14 @@ interpret :: IO r         -- ^ Acquire resource
           -> Options
           -> Handsy a
           -> IO a
-interpret acquire destroy f opts handsy = bracket acquire destroy (flip go handsy)
+interpret acquire destroy f opts handsy = bracket acquire destroy (`go` handsy)
   where go res h = do
           x <- runFreeT h
           case x of
             Pure r -> return r
             Free (Command prg args stdin next)
               -> when (debug opts) (hPutStrLn stderr $ prg ++ ' ' : show args)
-              >> f res prg args stdin >>= (go res) . next
+              >> f res prg args stdin >>= go res . next
 
 interpretSimple :: (String -> [String] -> B.ByteString
                 -> IO (ExitCode, B.ByteString, B.ByteString)) -- ^ 'readProcessWithExitCode'
