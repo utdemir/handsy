@@ -8,7 +8,7 @@ import           Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as B
 import           Data.Char
 import           Data.List
-import System.Exit
+import           System.Exit
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
