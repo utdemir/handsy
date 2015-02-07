@@ -3,6 +3,7 @@
 module Main where
 
 import           System.Handsy              as H
+import           System.Handsy.Remote       as H
 
 import           Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as B
