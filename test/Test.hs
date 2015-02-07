@@ -8,6 +8,7 @@ import           Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as B
 import           Data.Char
 import           Data.List
+import System.Exit
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -34,5 +35,15 @@ test2 = testCase "shell" $ do
 
   assertEqual "" h1 h2
 
+test3 = testCase "exit" $ do
+  (e1, e2) <- H.run options{debug=True} $ do
+    (e1, _, _) <- command "grep" [] ""
+    (e2, _, _) <- command "id" [] ""
+    return (e1, e2)
+
+  case (e1, e2) of
+   (ExitFailure _, ExitSuccess) -> return ()
+   _ -> assertFailure $ "Invalid return values: " ++ show (e1, e2)
+
 main :: IO ()
-main = defaultMain (testGroup "handsy" [test1, test2])
+main = defaultMain (testGroup "handsy" [test1, test2, test3])
