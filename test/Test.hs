@@ -28,7 +28,18 @@ test1 = testCase "writeFile . readFile == id" $ do
 
   assertEqual "" h1 h2
 
-test2 = testCase "shell" $ do
+test2 = testCase "appendFile" $ do
+  ret <- H.run options{debug=True} $ do
+    tmp <- dropWhileEnd isSpace . B.unpack . fst <$> command_ "mktemp" [] ""
+    
+    H.writeFile tmp "ut" 
+    H.appendFile tmp "demir"
+
+    H.readFile tmp
+
+  assertEqual "" "utdemir" ret
+    
+test3 = testCase "shell" $ do
   (h1, h2) <- H.run options{debug=True} $ do
     h1 <- takeWhile isHexDigit . B.unpack . fst <$> command_ "md5sum" ["/bin/sh"] ""
     h2 <- takeWhile isHexDigit . B.unpack . fst <$> shell_ "cat /bin/sh | md5sum -" ""
@@ -36,7 +47,7 @@ test2 = testCase "shell" $ do
 
   assertEqual "" h1 h2
 
-test3 = testCase "exit" $ do
+test4 = testCase "exit" $ do
   (e1, e2) <- H.run options{debug=True} $ do
     (e1, _, _) <- command "grep" [] ""
     (e2, _, _) <- command "id" [] ""
@@ -47,4 +58,4 @@ test3 = testCase "exit" $ do
    _ -> assertFailure $ "Invalid return values: " ++ show (e1, e2)
 
 main :: IO ()
-main = defaultMain (testGroup "handsy" [test1, test2, test3])
+main = defaultMain (testGroup "handsy" [test1, test2, test3, test4])
