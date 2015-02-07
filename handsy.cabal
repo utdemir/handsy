@@ -18,7 +18,7 @@ source-repository head
 library
   exposed-modules:  System.Handsy
                     System.Handsy.Remote
-                    System.Handsy.Internal
+                    System.Handsy.Core
   build-depends:    base >=4.6 && <4.8
                   , bytestring
                   , process
