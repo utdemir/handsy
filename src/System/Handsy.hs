@@ -20,6 +20,8 @@ module System.Handsy
   , Options (..)
   , options
 
+  -- * Re-exports
+  , ExitCode (..)
   ) where
 
 import           Prelude                        hiding (appendFile, readFile,

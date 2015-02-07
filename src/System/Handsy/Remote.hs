@@ -9,7 +9,6 @@ import           System.Handsy.Core     (interpretSimple)
 
 import qualified Data.ByteString.Char8  as C8
 import qualified Data.ByteString.Lazy   as B
-import           System.Exit
 
 import           Control.Monad.IO.Class
 
