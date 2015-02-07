@@ -5,7 +5,7 @@ import           Prelude                  hiding (appendFile, readFile,
                                            writeFile)
 
 import           System.Handsy
-import           System.Handsy.Internal   (interpretSimple)
+import           System.Handsy.Core       (interpretSimple)
 
 import qualified Data.ByteString.Char8    as C8
 import qualified Data.ByteString.Lazy     as B
@@ -22,13 +22,13 @@ data RemoteOptions =
   }
 
 -- | Executes the actions at a remote host
-runRemote :: RemoteOptions -> Handsy a -> IO a
-runRemote opts = interpretSimple runSsh
+runRemote :: Options -> RemoteOptions -> Handsy a -> IO a
+runRemote opts remote = interpretSimple runSsh opts
   where
     runSsh :: String -> [String] -> B.ByteString -> IO (ExitCode, B.ByteString, B.ByteString)
     runSsh prg args stdin = let c = C8.unpack . C8.intercalate " " . map (bytes . bash . C8.pack) $ (prg:args)
-                                (ssh, sshOpts) = sshCommand opts
-                            in run $ command ssh (sshOpts ++ [c]) stdin
+                                (ssh, sshOpts) = sshCommand remote
+                            in run options $ command ssh (sshOpts ++ [c]) stdin
 
 -- | Copies a local file to remote host
 pushFile :: FilePath -- ^ Local path of source

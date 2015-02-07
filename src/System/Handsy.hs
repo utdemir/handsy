@@ -4,6 +4,9 @@
 module System.Handsy
   ( module System.Handsy
   , Handsy
+  , Options
+  , options
+  , debug
   ) where
 
 import qualified Data.ByteString.Lazy           as B
@@ -13,8 +16,8 @@ import           System.Exit
 import           Control.Monad.Trans.Free
 import           System.Process.ByteString.Lazy
 
-import           System.Handsy.Internal         hiding (command)
-import qualified System.Handsy.Internal         as I
+import           System.Handsy.Core             hiding (command)
+import qualified System.Handsy.Core             as I
 
 -- * Actions
 
@@ -70,5 +73,5 @@ command_ path args stdin = command path args stdin >>= \case
 
 -- * Interpreter
 
-run :: Handsy a -> IO a
+run :: Options -> Handsy a -> IO a
 run = interpretSimple readProcessWithExitCode
