@@ -70,7 +70,7 @@ appendFile fp s = command "dd" ["of=" ++ fp, "conv=notrunc", "oflag=append"] s >
 shell :: String       -- ^ String to execute
       -> B.ByteString -- ^ Standart input
       -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (ExitCode, Stdout, Stderr)
-shell cmd = command "/usr/bin/env" ["sh", "-c", cmd]
+shell cmd = command "sh" ["-c", cmd]
 
 -- | Same as 'command', but ExitFailure is a runtime error.
 command_ :: FilePath -> [String] -> B.ByteString -> Handsy (B.ByteString, B.ByteString)
