@@ -1,5 +1,5 @@
 name:          handsy
-version:       0.0.8
+version:       0.0.9
 synopsis:      A DSL to describe common shell operations and interpeters for running them locally and remotely.
 -- description:   
 Homepage:      https://github.com/utdemir/handsy
