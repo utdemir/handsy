@@ -6,7 +6,8 @@ import           System.Handsy              as H
 import           System.Handsy.Remote       as H
 
 import           Control.Applicative
-import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Lazy       as B
+import qualified Data.ByteString.Lazy.Char8 as C
 import           Data.Char
 import           Data.List
 import           System.Exit
@@ -14,35 +15,40 @@ import           System.Exit
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
+arbitraryBinary :: B.ByteString
+arbitraryBinary = B.pack [1..255]
+
+createTempFile :: Handsy String
+createTempFile = dropWhileEnd isSpace . C.unpack . fst <$> command_ "mktemp" [] ""
+
 test1 = testCase "writeFile . readFile == id" $ do
-  (h1, h2) <- H.run options{debug=True} $ do
-    bin <- H.readFile "/bin/sh"
-    tmp <- dropWhileEnd isSpace . B.unpack . fst <$> command_ "mktemp" [] ""
+  ret <- H.run options{debug=True} $ do
+    tmp <- createTempFile
 
-    H.writeFile tmp bin
+    H.writeFile tmp arbitraryBinary
+    H.readFile tmp
 
-    h1 <- takeWhile isHexDigit . B.unpack . fst <$> H.command_ "md5sum" ["/bin/sh"] ""
-    h2 <- takeWhile isHexDigit . B.unpack . fst <$> H.command_ "md5sum" [tmp] ""
-
-    return (h1, h2)
-
-  assertEqual "" h1 h2
+  assertEqual "" arbitraryBinary ret
 
 test2 = testCase "appendFile" $ do
   ret <- H.run options{debug=True} $ do
-    tmp <- dropWhileEnd isSpace . B.unpack . fst <$> command_ "mktemp" [] ""
-    
-    H.writeFile tmp "ut" 
+    tmp <- createTempFile
+
+    H.writeFile tmp "ut"
     H.appendFile tmp "demir"
 
     H.readFile tmp
 
   assertEqual "" "utdemir" ret
-    
+
 test3 = testCase "shell" $ do
   (h1, h2) <- H.run options{debug=True} $ do
-    h1 <- takeWhile isHexDigit . B.unpack . fst <$> command_ "md5sum" ["/bin/sh"] ""
-    h2 <- takeWhile isHexDigit . B.unpack . fst <$> shell_ "cat /bin/sh | md5sum -" ""
+    tmp <- createTempFile
+
+    H.writeFile tmp (B.pack [1..255])
+
+    h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp] ""
+    h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -") ""
     return (h1, h2)
 
   assertEqual "" h1 h2
