@@ -27,7 +27,7 @@ runRemote opts remote = interpretSimple runSsh opts
     runSsh :: String -> [String] -> B.ByteString -> IO (ExitCode, B.ByteString, B.ByteString)
     runSsh prg args stdin = let c = C8.unpack . C8.intercalate " " . map (bytes . bash . C8.pack) $ (prg:args)
                                 (ssh, sshOpts) = sshCommand remote
-                            in run optioons{debug=False} $ command ssh (sshOpts ++ [c]) stdin
+                            in run options{debug=False} $ command ssh (sshOpts ++ [c]) stdin
 
 -- | Copies a local file to remote host
 pushFile :: FilePath -- ^ Local path of source
