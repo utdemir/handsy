@@ -3,7 +3,11 @@
 module Main where
 
 import           System.Handsy              as H
+
+{- These aren't currently used in tests, but I
+   import them for coverage reports. -}
 import           System.Handsy.Remote       as H
+import           System.Handsy.Util         as H
 
 import           Control.Applicative
 import qualified Data.ByteString.Lazy       as B
