@@ -56,6 +56,6 @@ mkTempDir suffix = head . strLines . fst
 
 -- | Returns if the specified process is running. Uses `pidof`
 isRunning :: String -> Handsy Bool
-isRunning p = command "pidof" [p] >>= return . \case
+isRunning p = command "pidof" ["-s", "-x", p] >>= return . \case
   (ExitSuccess, _, _) -> True
   _                   -> False
