@@ -23,7 +23,7 @@ strLines = lines . C.unpack
 -- | Creates a temporary file
 mkTemp :: String -> Handsy String
 mkTemp suffix = head . strLines . fst
-                  <$> command_ "mktemp" (bool ["-s", suffix] [] (null suffix)) ""
+                  <$> command_ "mktemp" (bool ["--suffix=" ++ suffix] [] (null suffix)) ""
 
 -- | Creates a temporary directory
 mkTempDir :: String -> Handsy String
