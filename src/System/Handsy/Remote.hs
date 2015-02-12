@@ -3,10 +3,17 @@
 
 module System.Handsy.Remote
   ( runRemote
-  , remoteOptions
-  , RemoteOptions(..)
+  , Host
+
+  -- * Options
+  , SSHOptions (..)
+
+  -- * Helpers
   , pushFile
   , pullFile
+
+  -- * Re-exports
+  , def
   ) where
 
 import           Prelude                hiding (appendFile, readFile, writeFile)
@@ -16,63 +23,74 @@ import           System.Handsy.Core     (interpret, interpretSimple)
 import           System.Handsy.Util
 
 import           Control.Applicative
-import           Control.Arrow
 import           Control.Concurrent
 import           Control.Monad
 import           Control.Retry
 import           Data.Bool
-import qualified Data.ByteString.Char8  as C8
 import qualified Data.ByteString.Lazy   as B
 
 import           Control.Monad.IO.Class
+import           Data.Default.Class
 
-import           Text.ShellEscape
+type Host = String
+data SSHOptions =
+  SSHOptions {
+    -- | Path of `ssh` command
+    sshPath       :: FilePath,
 
-data RemoteOptions =
-  RemoteOptions {
-    -- | Path of `ssh` command and command line arguments
-    sshCommand    :: (FilePath, [String]),
+    -- | Port to connect
+    sshPort       :: Int,
+
     {-| Whether to use control master for SSH connections.
-        This significantly reduces the execution time.
-    |-}
+        This significantly reduces execution time.
+    -}
     controlMaster :: Bool
   }
 
-remoteOptions :: (FilePath, [String]) -> RemoteOptions
-remoteOptions ssh = RemoteOptions ssh True
+instance Default SSHOptions where
+  def = SSHOptions "ssh" 22 True
 
-acquireCM :: (FilePath, [String]) -> IO FilePath
-acquireCM (ssh, sshOpts) = do
-  cm <- run options $ head . strLines . fst <$> command_ "mktemp" ["-u", "--suffix=.handsy"] ""
 
-  _ <- forkIO . run options . void $ command_ ssh (["-M", "-S", cm, "-N"] ++ sshOpts) ""
+acquireCM :: Host -> SSHOptions -> IO FilePath
+acquireCM host opts = do
+  cm <- run def $ head . strLines . fst <$> command_ "mktemp" ["-u", "--suffix=.handsy"]
+
+  let (ssh, params) = genSsh opts (Just cm)
+  _ <- forkIO . run def . void $ command_ ssh (params ++ ["-M", "-N", host])
   bool (error "Error establishing ControlMaster connection") () <$> waitForCM cm
 
   return cm
   where
     checkCM :: FilePath -> IO Bool
-    checkCM p = run options $ command "ssh" ["-o", "ControlPath=" ++ p, "-O", "check", ssh] "" >>= return . \case
-      (ExitSuccess, _, _) -> True
-      _                   -> False
+    checkCM p = run def $ do
+      let args = snd (genSsh opts Nothing) ++ ["-o", "ControlPath=" ++ p, "-O", "check"]
+      command (sshPath opts) args >>= return . \case
+        (ExitSuccess, _, _) -> True
+        _                   -> False
     waitForCM p = retrying (limitRetries 30) (\_ n -> return (not n)) (checkCM p)
 
 
 releaseCM :: FilePath -> IO ()
-releaseCM p = run options{debug=False} $ void $ command_ "rm" ["-f", p] ""
+releaseCM p = run def{debug=False} $ void $ command_ "rm" ["-f", p]
 
-runSsh :: (FilePath, [String]) -> String -> [String] -> B.ByteString -> IO (ExitCode, B.ByteString, B.ByteString)
-runSsh (ssh, sshOpts) prg args stdin =
-  let c = C8.unpack . C8.intercalate " " . map (bytes . bash . C8.pack) $ (prg:args)
-  in run options $ command ssh (sshOpts ++ [c]) stdin
+genSsh :: SSHOptions -> Maybe FilePath -> (FilePath, [String])
+genSsh opts cm = (sshPath opts, ["-p", show $ sshPort opts] ++ maybe [] (\i->["-S", i]) cm)
+
+runSsh :: Host -> SSHOptions -> Maybe FilePath -> String -> B.ByteString
+       -> IO (ExitCode, B.ByteString, B.ByteString)
+runSsh host opts cm cmdline stdin' =
+  let (ssh, params) = genSsh opts cm
+  in  run def{debug=False} $ command ssh (params ++ [host] ++ [cmdline]) $~ def{stdin=stdin'}
 
 -- | Executes the actions at a remote host
-runRemote :: Options -> RemoteOptions -> Handsy a -> IO a
-runRemote opts remote = case controlMaster remote of
-  False -> interpretSimple (runSsh $ sshCommand remote) opts
-  True  -> interpret (acquireCM (sshCommand remote))
-                     releaseCM
-                     (\i -> runSsh $ second (++ ["-S", i]) $ sshCommand remote)
-                     opts
+runRemote :: Options -> Host -> SSHOptions -> Handsy a -> IO a
+runRemote opts host sshOpts =
+  case controlMaster sshOpts of
+    False -> interpretSimple (runSsh host sshOpts Nothing) opts
+    True  -> interpret (acquireCM host sshOpts)
+                       releaseCM
+                       (runSsh host sshOpts . Just)
+                       opts
 
 -- | Copies a local file to remote host
 pushFile :: FilePath -- ^ Local path of source

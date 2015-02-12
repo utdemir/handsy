@@ -6,9 +6,8 @@ module System.Handsy.Core
   ( Handsy
   , interpret
   , interpretSimple
-  , command
+  , shell
   , Options (..)
-  , options
   ) where
 
 import           Control.Exception        (bracket)
@@ -16,11 +15,12 @@ import           Control.Monad
 import           Control.Monad.Free.TH
 import           Control.Monad.Trans.Free
 import qualified Data.ByteString.Lazy     as B
+import           Data.Default.Class
 import           System.Exit
 import           System.IO                (hPutStrLn, stderr)
 
 data HandsyF k =
-    Command      FilePath [String] B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
+    Shell FilePath B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
   deriving (Functor)
 
 makeFree ''HandsyF
@@ -32,14 +32,13 @@ data Options =
   Options { debug :: Bool -- ^ Log commands to stderr before running
           }
 
--- | Default options
-options :: Options
-options = Options False
+instance Default Options where
+  def = Options False
 
 interpret :: IO r         -- ^ Acquire resource
           -> (r -> IO ()) -- ^ Release resource
-          -> (r -> String -> [String] -> B.ByteString
-              -> IO (ExitCode, B.ByteString, B.ByteString)) -- ^ 'readProcessWithExitCode' + resource
+          -> (r -> String -> B.ByteString
+              -> IO (ExitCode, B.ByteString, B.ByteString))
           -> Options
           -> Handsy a
           -> IO a
@@ -48,12 +47,12 @@ interpret acquire destroy f opts handsy = bracket acquire destroy (`go` handsy)
           x <- runFreeT h
           case x of
             Pure r -> return r
-            Free (Command prg args stdin next)
-              -> when (debug opts) (hPutStrLn stderr $ prg ++ ' ' : show args)
-              >> f res prg args stdin >>= go res . next
+            Free (Shell cmdline stdin next)
+              -> when (debug opts) (hPutStrLn stderr $ cmdline)
+              >> f res cmdline stdin >>= go res . next
 
-interpretSimple :: (String -> [String] -> B.ByteString
-                -> IO (ExitCode, B.ByteString, B.ByteString)) -- ^ 'readProcessWithExitCode'
+interpretSimple :: (FilePath -> B.ByteString
+                    -> IO (ExitCode, B.ByteString, B.ByteString)) -- ^ 'readProcessWithExitCode'
                 -> Options
                 -> Handsy a
                 -> IO a

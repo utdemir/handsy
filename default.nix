@@ -16,6 +16,6 @@ hs.mkDerivation {
   
   buildDepends = [
     hs.base hs.cabal-install hs.free hs.process-extras hs.shell-escape
-    hs.tasty hs.tasty-hunit hs.retry
+    hs.tasty hs.tasty-hunit hs.retry hs.implicit-params hs.data-default-class
   ];
 }

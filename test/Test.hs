@@ -23,10 +23,10 @@ arbitraryBinary :: B.ByteString
 arbitraryBinary = B.pack [1..255]
 
 createTempFile :: Handsy String
-createTempFile = dropWhileEnd isSpace . C.unpack . fst <$> command_ "mktemp" [] ""
+createTempFile = dropWhileEnd isSpace . C.unpack . fst <$> command_ "mktemp" []
 
 test1 = testCase "writeFile . readFile == id" $ do
-  ret <- H.run options{debug=True} $ do
+  ret <- H.run def{debug=True} $ do
     tmp <- createTempFile
 
     H.writeFile tmp arbitraryBinary
@@ -35,7 +35,7 @@ test1 = testCase "writeFile . readFile == id" $ do
   assertEqual "" arbitraryBinary ret
 
 test2 = testCase "appendFile" $ do
-  ret <- H.run options{debug=True} $ do
+  ret <- H.run def{debug=True} $ do
     tmp <- createTempFile
 
     H.writeFile tmp "ut"
@@ -46,21 +46,21 @@ test2 = testCase "appendFile" $ do
   assertEqual "" "utdemir" ret
 
 test3 = testCase "shell" $ do
-  (h1, h2) <- H.run options{debug=True} $ do
+  (h1, h2) <- H.run def{debug=True} $ do
     tmp <- createTempFile
 
     H.writeFile tmp (B.pack [1..255])
 
-    h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp] ""
-    h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -") ""
+    h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp]
+    h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -")
     return (h1, h2)
 
   assertEqual "" h1 h2
 
 test4 = testCase "exit" $ do
-  (e1, e2) <- H.run options{debug=True} $ do
-    (e1, _, _) <- command "grep" [] ""
-    (e2, _, _) <- command "id" [] ""
+  (e1, e2) <- H.run def{debug=True} $ do
+    (e1, _, _) <- command "grep" []
+    (e2, _, _) <- command "id" []
     return (e1, e2)
 
   case (e1, e2) of
