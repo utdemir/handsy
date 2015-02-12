@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell  #-}
 
-module System.Handsy.Core
+module System.Handsy.Internal
   ( Handsy
   , interpret
   , interpretSimple

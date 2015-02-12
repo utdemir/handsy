@@ -42,8 +42,8 @@ import           System.Process.ByteString.Lazy
 
 import           Text.ShellEscape
 
-import           System.Handsy.Core             hiding (shell)
-import qualified System.Handsy.Core             as I
+import           System.Handsy.Internal         hiding (shell)
+import qualified System.Handsy.Internal         as I
 
 -- * Commands
 

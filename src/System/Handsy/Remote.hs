@@ -19,7 +19,7 @@ module System.Handsy.Remote
 import           Prelude                hiding (appendFile, readFile, writeFile)
 
 import           System.Handsy
-import           System.Handsy.Core     (interpret, interpretSimple)
+import           System.Handsy.Internal (interpret, interpretSimple)
 import           System.Handsy.Util
 
 import           Control.Applicative
