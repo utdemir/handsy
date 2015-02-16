@@ -52,10 +52,8 @@ mkTemp suffix = head . strLines . fst
 -- | Creates a temporary directory
 mkTempDir :: String -> Handsy String
 mkTempDir suffix = head . strLines . fst
-                  <$> command_ "mktemp" ("-d" : bool ["-s", suffix] [] (null suffix)) def
+                  <$> command_ "mktemp" ("-d" : bool ["--suffix" ++ suffix] [] (null suffix)) def
 
 -- | Returns if the specified process is running. Uses `pidof`
 isRunning :: String -> Handsy Bool
-isRunning p = command "pidof" ["-s", "-x", p] def >>= return . \case
-  (ExitSuccess, _, _) -> True
-  _                   -> False
+isRunning p = isSuccessful <$> command "pidof" ["-s", "-x", p] def
