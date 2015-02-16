@@ -47,15 +47,15 @@ strLines = lines . C.unpack
 -- | Creates a temporary file
 mkTemp :: String -> Handsy String
 mkTemp suffix = head . strLines . fst
-                  <$> command_ "mktemp" (bool ["--suffix=" ++ suffix] [] (null suffix))
+                  <$> command_ "mktemp" (bool ["--suffix=" ++ suffix] [] (null suffix)) def
 
 -- | Creates a temporary directory
 mkTempDir :: String -> Handsy String
 mkTempDir suffix = head . strLines . fst
-                  <$> command_ "mktemp" ("-d" : bool ["-s", suffix] [] (null suffix))
+                  <$> command_ "mktemp" ("-d" : bool ["-s", suffix] [] (null suffix)) def
 
 -- | Returns if the specified process is running. Uses `pidof`
 isRunning :: String -> Handsy Bool
-isRunning p = command "pidof" ["-s", "-x", p] >>= return . \case
+isRunning p = command "pidof" ["-s", "-x", p] def >>= return . \case
   (ExitSuccess, _, _) -> True
   _                   -> False

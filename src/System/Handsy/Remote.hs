@@ -50,13 +50,12 @@ data SSHOptions =
 instance Default SSHOptions where
   def = SSHOptions "ssh" 22 True
 
-
 acquireCM :: Host -> SSHOptions -> IO FilePath
 acquireCM host opts = do
-  cm <- run def $ head . strLines . fst <$> command_ "mktemp" ["-u", "--suffix=.handsy"]
+  cm <- run def $ head . strLines . fst <$> command_ "mktemp" ["-u", "--suffix=.handsy"] def
 
   let (ssh, params) = genSsh opts (Just cm)
-  _ <- forkIO . run def . void $ command_ ssh (params ++ ["-M", "-N", host])
+  _ <- forkIO . run def . void $ command_ ssh (params ++ ["-M", "-N", host]) def
   bool (error "Error establishing ControlMaster connection") () <$> waitForCM cm
 
   return cm
@@ -64,14 +63,14 @@ acquireCM host opts = do
     checkCM :: FilePath -> IO Bool
     checkCM p = run def $ do
       let args = snd (genSsh opts Nothing) ++ ["-o", "ControlPath=" ++ p, "-O", "check"]
-      command (sshPath opts) args >>= return . \case
+      command (sshPath opts) args def >>= return . \case
         (ExitSuccess, _, _) -> True
         _                   -> False
     waitForCM p = retrying (limitRetries 30) (\_ n -> return (not n)) (checkCM p)
 
 
 releaseCM :: FilePath -> IO ()
-releaseCM p = run def{debug=False} $ void $ command_ "rm" ["-f", p]
+releaseCM p = run def{debug=False} $ void $ command_ "rm" ["-f", p] def
 
 genSsh :: SSHOptions -> Maybe FilePath -> (FilePath, [String])
 genSsh opts cm = (sshPath opts, ["-p", show $ sshPort opts] ++ maybe [] (\i->["-S", i]) cm)
@@ -80,7 +79,7 @@ runSsh :: Host -> SSHOptions -> Maybe FilePath -> String -> B.ByteString
        -> IO (ExitCode, B.ByteString, B.ByteString)
 runSsh host opts cm cmdline stdin' =
   let (ssh, params) = genSsh opts cm
-  in  run def{debug=False} $ command ssh (params ++ [host] ++ [cmdline]) $~ def{stdin=stdin'}
+  in  run def{debug=False} $ command ssh (params ++ [host] ++ [cmdline]) def{stdin=stdin'}
 
 -- | Executes the actions at a remote host
 runRemote :: Options -> Host -> SSHOptions -> Handsy a -> IO a

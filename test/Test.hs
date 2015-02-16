@@ -55,16 +55,16 @@ case_shell = do
 
     H.writeFile tmp (B.pack [1..255])
 
-    h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp]
-    h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -")
+    h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp] def
+    h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -") def
     return (h1, h2)
 
   assertEqual "" h1 h2
 
 case_exit = do
   (e1, e2) <- H.run def $ do
-    (e1, _, _) <- command "grep" []
-    (e2, _, _) <- command "id" []
+    (e1, _, _) <- command "grep" [] def
+    (e2, _, _) <- command "id" [] def
     return (e1, e2)
 
   case (e1, e2) of
@@ -74,10 +74,9 @@ case_exit = do
 case_cwd = do
   (temp, pwd) <- H.run def $ do
     temp <- mkTempDir ""
-    pwd:[] <- strLines . stdout <$> command_ "pwd" [] $~ def{cwd=temp}
+    pwd:[] <- strLines . stdout <$> command_ "pwd" [] def{cwd=temp}
     return (temp, pwd)
   assertEqual "" temp pwd
-
 
 main :: IO ()
 main = $(defaultMainGenerator)
