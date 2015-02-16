@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Main where
 
@@ -18,25 +19,28 @@ import           System.Exit
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           Test.Tasty.TH
 
 arbitraryBinary :: B.ByteString
 arbitraryBinary = B.pack [1..255]
 
-createTempFile :: Handsy String
-createTempFile = dropWhileEnd isSpace . C.unpack . fst <$> command_ "mktemp" []
-
-test1 = testCase "writeFile . readFile == id" $ do
-  ret <- H.run def{debug=True} $ do
-    tmp <- createTempFile
-
+case_writeFile = do
+  f <- H.run def $ do
+    tmp <- mkTemp ""
     H.writeFile tmp arbitraryBinary
-    H.readFile tmp
-
+    return tmp
+  ret <- B.readFile f
   assertEqual "" arbitraryBinary ret
 
-test2 = testCase "appendFile" $ do
-  ret <- H.run def{debug=True} $ do
-    tmp <- createTempFile
+case_readFile = do
+  tmp <- H.run def $ mkTemp ""
+  B.writeFile tmp arbitraryBinary
+  ret <- H.run def $ H.readFile tmp
+  assertEqual "" arbitraryBinary ret
+
+case_appendFile = do
+  ret <- H.run def $ do
+    tmp <- mkTemp ""
 
     H.writeFile tmp "ut"
     H.appendFile tmp "demir"
@@ -45,9 +49,9 @@ test2 = testCase "appendFile" $ do
 
   assertEqual "" "utdemir" ret
 
-test3 = testCase "shell" $ do
-  (h1, h2) <- H.run def{debug=True} $ do
-    tmp <- createTempFile
+case_shell = do
+  (h1, h2) <- H.run def $ do
+    tmp <- mkTemp ""
 
     H.writeFile tmp (B.pack [1..255])
 
@@ -57,15 +61,23 @@ test3 = testCase "shell" $ do
 
   assertEqual "" h1 h2
 
-test4 = testCase "exit" $ do
-  (e1, e2) <- H.run def{debug=True} $ do
+case_exit = do
+  (e1, e2) <- H.run def $ do
     (e1, _, _) <- command "grep" []
     (e2, _, _) <- command "id" []
     return (e1, e2)
 
   case (e1, e2) of
-   (ExitFailure _, ExitSuccess) -> return ()
-   _ -> assertFailure $ "Invalid return values: " ++ show (e1, e2)
+    (ExitFailure _, ExitSuccess) -> return ()
+    _ -> assertFailure $ "Invalid return values: " ++ show (e1, e2)
+
+case_cwd = do
+  (temp, pwd) <- H.run def $ do
+    temp <- mkTempDir ""
+    pwd:[] <- strLines . stdout <$> command_ "pwd" [] $~ def{cwd=temp}
+    return (temp, pwd)
+  assertEqual "" temp pwd
+
 
 main :: IO ()
-main = defaultMain (testGroup "handsy" [test1, test2, test3, test4])
+main = $(defaultMainGenerator)

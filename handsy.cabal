@@ -44,3 +44,4 @@ test-suite tests
                  , bytestring
                  , tasty
                  , tasty-hunit
+                 , tasty-th
