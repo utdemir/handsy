@@ -108,4 +108,4 @@ shell_ cmd = shell cmd >>= \case
 
 -- | Executes the actions locally
 run :: Options -> Handsy a -> IO a
-run = interpretSimple (\cmdline -> readProcessWithExitCode "sh" ["-c", cmdline])
+run = interpretSimple (\cmdline -> readProcessWithExitCode "bash" ["-c", cmdline])
