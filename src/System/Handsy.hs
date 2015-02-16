@@ -34,7 +34,6 @@ import qualified Data.ByteString.Lazy           as B
 import qualified Data.ByteString.Lazy.Char8     as C
 import qualified Data.ByteString.Char8 as C8
 import           System.Exit
-import           Data.Bool
 
 import           Data.Default.Class
 import           Data.Implicit
@@ -63,13 +62,13 @@ shell :: Implicit_ CommandOptions
       => String       -- ^ String to execute
       -> Handsy (ExitCode, B.ByteString, B.ByteString) -- ^ (ExitCode, Stdout, Stderr)
 shell cmd = let esc = C8.unpack . bytes . bash . C8.pack
-                pre = bool ("cd " ++ esc (cwd param_)) "" (null $ cwd param_)
-            in I.shell (pre ++ cmd) (stdin param_)
-
+            in  I.shell ((if null (cwd param_) then "" else "cd " ++ (cwd param_) ++ "; ") ++ cmd) (stdin param_)
+                
 data CommandOptions =
   CommandOptions { stdin :: B.ByteString
                  , cwd   :: String
                  }
+  deriving Show
 
 instance Default CommandOptions where
   def = CommandOptions "" ""
@@ -109,3 +108,4 @@ shell_ cmd = shell cmd >>= \case
 -- | Executes the actions locally
 run :: Options -> Handsy a -> IO a
 run = interpretSimple (\cmdline -> readProcessWithExitCode "bash" ["-c", cmdline])
+
