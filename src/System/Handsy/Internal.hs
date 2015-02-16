@@ -48,7 +48,7 @@ interpret acquire destroy f opts handsy = bracket acquire destroy (`go` handsy)
           case x of
             Pure r -> return r
             Free (Shell cmdline stdin next)
-              -> when (debug opts) (hPutStrLn stderr $ cmdline)
+              -> when (debug opts) (hPutStrLn stderr cmdline)
               >> f res cmdline stdin >>= go res . next
 
 interpretSimple :: (FilePath -> B.ByteString
