@@ -78,19 +78,19 @@ instance Default CommandOptions where
 readFile :: FilePath -> Handsy B.ByteString
 readFile fp = command "cat" [fp] >>= \case
   (ExitSuccess, stdout, _) -> return stdout
-  _                       -> error $ "Error reading " ++ fp
+  (_, _, stderr)           -> error $ "Error reading " ++ fp ++ "\nStderr was: " ++ C.unpack stderr
 
 -- | @writeFile file str@ function writes the bytestring @str@, to the file @file@.
 writeFile :: FilePath -> B.ByteString -> Handsy ()
 writeFile fp s = command "dd" ["of=" ++ fp] $~ def{stdin=s} >>= \case
   (ExitSuccess, _, _) -> return ()
-  _                   -> error $ "Error writing to " ++ fp
+  (_, _, stderr)      -> error $ "Error writing to " ++ fp  ++ "\nStderr was: " ++ C.unpack stderr
 
 -- | @appendFile file str@ function appends the bytestring @str@, to the file @file@.
 appendFile :: FilePath -> B.ByteString -> Handsy ()
 appendFile fp s = command "dd" ["of=" ++ fp, "conv=notrunc", "oflag=append"] $~ def{stdin=s} >>= \case
   (ExitSuccess, _, _) -> return ()
-  _                   -> error $ "Error appending to " ++ fp
+  (_, _, stderr)      -> error $ "Error appending to " ++ fp ++ "\nStderr was: " ++ C.unpack stderr
 
 -- | Same as 'command', but ExitFailure is a runtime error.
 command_ :: Implicit_ CommandOptions => FilePath -> [String] -> Handsy (B.ByteString, B.ByteString)
