@@ -3,7 +3,7 @@
 }:
 
 let
-    pkgs = (import nixpkgsSrc { inherit system; });
+    pkgs = (import nixpkgs { inherit system; });
     hs = pkgs.haskellngPackages;
 in
 
