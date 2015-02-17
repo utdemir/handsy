@@ -1,4 +1,4 @@
-{ nixpkgsSrc ? { outPath = ../nixpkgs; revCount = 1234; gitTag = "dirty"; } 
+{ nixpkgs ? { outPath = ../nixpkgs; revCount = 1234; gitTag = "dirty"; } 
 , system ? "x86_64-linux"
 }:
 
