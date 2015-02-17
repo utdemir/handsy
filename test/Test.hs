@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module Main where
 
@@ -14,10 +15,7 @@ import           Control.Applicative
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C
 import           Data.Char
-import           Data.List
-import           System.Exit
 
-import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Test.Tasty.TH
 
