@@ -9,6 +9,7 @@ import           Control.Concurrent
 import           Control.Monad.IO.Class
 import           Data.Bool
 import qualified Data.ByteString.Lazy.Char8 as C
+import           Data.List.Split
 import           Prelude                    hiding (appendFile, readFile,
                                              writeFile)
 import           System.Handsy
@@ -57,3 +58,20 @@ mkTempDir suffix = head . strLines . fst
 -- | Returns if the specified process is running. Uses `pidof`
 isRunning :: String -> Handsy Bool
 isRunning p = isSuccessful <$> command "pidof" ["-s", "-x", p] def
+
+data OS = NixOS | Debian | Ubuntu | RHEL | CentOS | Fedora | ArchLinux
+  deriving (Show, Eq)
+
+-- | Guesses the os using `/etc/os-release`
+os :: Handsy (Maybe OS)
+os = parseOsRelease <$> readFile "/etc/os-release" >>= return . \case
+    Just "ubuntu" -> Just Ubuntu
+    Just "debian" -> Just Debian
+    Just "nixos"  -> Just NixOS
+    Just "rhel"   -> Just RHEL
+    Just "centos" -> Just CentOS
+    Just "fedora" -> Just Fedora
+    Just "arch"   -> Just ArchLinux
+    _             -> Nothing
+  where parseOsRelease = fmap (filter $ not . flip elem "'\"") -- Hack to unquote
+          <$> lookup "ID" . map ((\(x:xs) -> (x, concat xs)) . splitOn "=") . strLines
