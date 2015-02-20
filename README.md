@@ -6,3 +6,5 @@
 
 
 A Haskell DSL to describe common shell operations and interpeters for running them locally and remotely.
+
+See [the Hackage page for `handsy`](http://hackage.haskell.org/package/handsy) for details and documentation.
