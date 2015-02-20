@@ -14,6 +14,8 @@ import           Prelude                    hiding (appendFile, readFile,
                                              writeFile)
 import           System.Handsy
 
+-- * Helpers for parsing return values of 'command' and 'shell'
+
 class IsReturnValue a where
   stdout   :: a -> C.ByteString
   stderr   :: a -> C.ByteString
@@ -37,13 +39,15 @@ isExitSuccess = \case
   ExitSuccess   -> True
   ExitFailure _ -> False
 
--- | Waits specified number of seconds
-sleep :: Int -> Handsy ()
-sleep = liftIO . threadDelay . (* 1000000)
-
 -- | Extract lines from a ByteString. Useful for parsing unix commands.
 strLines :: C.ByteString -> [String]
 strLines = lines . C.unpack
+
+-- * Frequently used functionality
+
+-- | Waits specified number of seconds
+sleep :: Int -> Handsy ()
+sleep = liftIO . threadDelay . (* 1000000)
 
 -- | Creates a temporary file
 mkTemp :: String -> Handsy String
@@ -62,7 +66,8 @@ isRunning p = isSuccessful <$> command "pidof" ["-s", "-x", p] def
 data OS = NixOS | Debian | Ubuntu | RHEL | CentOS | Fedora | ArchLinux
   deriving (Show, Eq)
 
--- | Guesses the os using `/etc/os-release`
+{-| Guesses the os using `/etc/os-release`. This currently only supports Linux distributions
+    abiding systemd standards. -}
 os :: Handsy (Maybe OS)
 os = parseOsRelease <$> readFile "/etc/os-release" >>= return . \case
     Just "ubuntu" -> Just Ubuntu

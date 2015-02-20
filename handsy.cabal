@@ -19,6 +19,7 @@ library
                     System.Handsy.Remote
                     System.Handsy.Util
                     System.Handsy.Internal
+                    System.Handsy.Tutorial
   build-depends:    base >=4.6 && <4.8
                   , bytestring
                   , process
