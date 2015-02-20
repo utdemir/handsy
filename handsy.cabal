@@ -1,7 +1,18 @@
 name:          handsy
 version:       0.0.10
 synopsis:      A DSL to describe common shell operations and interpeters for running them locally and remotely.
--- description:   
+description:
+    @handsy@ is a small library mainly for applications which should make some
+    operations on remote machines by SSH. It currently provides you:
+    .
+    * A DSL describing basic system operations('command', 'readFile', 'writeFile' etc.)
+    * Two interpreters for running this DSL locally or via SSH('run' and 'runRemote')
+    * Some utility functions for common commands('os', 'mkTemp' etc.)
+    .
+    If you're looking for a shell scripting alternative, look at @turtle@, @shelly@ or
+    @shellmate@ packages. @handsy@ is mostly relevant for the ability to apply simple
+    commands remotely.
+
 Homepage:      https://github.com/utdemir/handsy
 license:       BSD3
 author:        Utku Demir
