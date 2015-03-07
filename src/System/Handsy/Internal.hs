@@ -1,6 +1,5 @@
-{-# LANGUAGE DeriveFunctor    #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell  #-}
+{-# LANGUAGE GADTs      #-}
+{-# LANGUAGE LambdaCase #-}
 
 module System.Handsy.Internal
   ( Handsy
@@ -8,25 +7,27 @@ module System.Handsy.Internal
   , interpretSimple
   , shell
   , Options (..)
-  ) where
+  )
+  where
 
-import           Control.Exception        (bracket)
+import           Control.Exception         (bracket)
 import           Control.Monad
-import           Control.Monad.Free.TH
-import           Control.Monad.Trans.Free
-import qualified Data.ByteString.Lazy     as B
+import           Control.Monad.Operational
+import qualified Data.ByteString.Lazy      as B
 import           Data.Default.Class
-import           System.Exit
-import           System.IO                (hPutStrLn, stderr)
+import           System.Exit               (ExitCode)
+import           System.IO                 (hPutStrLn, stderr)
 
-data HandsyF k =
-    Shell FilePath B.ByteString ((ExitCode, B.ByteString, B.ByteString) -> k)
-  deriving (Functor)
+type StdOut = B.ByteString
+type StdErr = B.ByteString
 
-makeFree ''HandsyF
+data HandsyInstruction a where
+ Shell :: String -> B.ByteString -> HandsyInstruction (ExitCode, StdOut, StdErr)
 
--- | Main monad
-type Handsy = FreeT HandsyF IO
+type Handsy a = ProgramT HandsyInstruction IO a
+
+shell :: FilePath -> B.ByteString -> Handsy (ExitCode, B.ByteString, B.ByteString)
+shell cmd stdin = singleton $ Shell cmd stdin
 
 data Options =
   Options { debug :: Bool -- ^ Log commands to stderr before running
@@ -43,13 +44,11 @@ interpret :: IO r         -- ^ Acquire resource
           -> Handsy a
           -> IO a
 interpret acquire destroy f opts handsy = bracket acquire destroy (`go` handsy)
-  where go res h = do
-          x <- runFreeT h
-          case x of
-            Pure r -> return r
-            Free (Shell cmdline stdin next)
-              -> when (debug opts) (hPutStrLn stderr cmdline)
-              >> f res cmdline stdin >>= go res . next
+  where -- go :: r -> Handsy a -> IO a
+        go res h = viewT h >>= \case
+          Return x                   -> return x
+          Shell cmdline stdin :>>= k -> when (debug opts) (hPutStrLn stderr cmdline)
+                                        >> f res cmdline stdin >>= go res . k
 
 interpretSimple :: (FilePath -> B.ByteString
                     -> IO (ExitCode, B.ByteString, B.ByteString)) -- ^ 'readProcessWithExitCode'

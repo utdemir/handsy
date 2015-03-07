@@ -35,7 +35,7 @@ library
                   , bytestring
                   , process
                   , transformers
-                  , free
+                  , operational
                   , process-extras
                   , shell-escape
                   , retry
