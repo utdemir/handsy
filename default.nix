@@ -9,7 +9,7 @@ in
 
 hs.mkDerivation {
   pname = "handsy";
-  version = "0.0.11";
+  version = "0.0.12";
   license = "unknown";
   isLibrary = true;
   src = ./.;
@@ -18,5 +18,7 @@ hs.mkDerivation {
     hs.base hs.cabal-install hs.operational hs.process-extras hs.shell-escape
     hs.tasty hs.tasty-hunit hs.tasty-th hs.retry hs.data-default-class
     hs.split
+
+    pkgs.openssh pkgs.curl hs.pandoc
   ];
 }
