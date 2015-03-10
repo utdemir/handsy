@@ -1,5 +1,6 @@
-{-# LANGUAGE GADTs      #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Handsy.Internal
   ( Handsy
@@ -36,7 +37,8 @@ data Options =
 instance Default Options where
   def = Options False
 
-interpret :: IO r         -- ^ Acquire resource
+interpret :: forall r . forall a
+           . IO r         -- ^ Acquire resource
           -> (r -> IO ()) -- ^ Release resource
           -> (r -> String -> B.ByteString
               -> IO (ExitCode, B.ByteString, B.ByteString))
@@ -44,7 +46,7 @@ interpret :: IO r         -- ^ Acquire resource
           -> Handsy a
           -> IO a
 interpret acquire destroy f opts handsy = bracket acquire destroy (`go` handsy)
-  where -- go :: r -> Handsy a -> IO a
+  where go :: r -> Handsy a -> IO a
         go res h = viewT h >>= \case
           Return x                   -> return x
           Shell cmdline stdin :>>= k -> when (debug opts) (hPutStrLn stderr cmdline)
