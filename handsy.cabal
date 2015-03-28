@@ -33,7 +33,7 @@ library
                     System.Handsy.Util
                     System.Handsy.Internal
                     System.Handsy.Tutorial
-  build-depends:    base >=4.6 && <4.8
+  build-depends:    base >=4.6 && <4.9
                   , bytestring
                   , transformers
                   , operational
