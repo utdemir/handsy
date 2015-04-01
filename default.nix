@@ -1,24 +1,17 @@
-{ nixpkgs ? { outPath = ../nixpkgs; revCount = 1234; gitTag = "dirty"; } 
-, system ? "x86_64-linux"
+{ mkDerivation, base, bytestring, data-default-class, operational
+, process-extras, retry, shell-escape, split, stdenv, tasty
+, tasty-hunit, tasty-th, transformers
 }:
-
-let
-    pkgs = (import nixpkgs { inherit system; });
-    hs = pkgs.haskellngPackages;
-in
-
-hs.mkDerivation {
+mkDerivation {
   pname = "handsy";
   version = "0.0.13";
-  license = "unknown";
-  isLibrary = true;
   src = ./.;
-  
   buildDepends = [
-    hs.base hs.cabal-install hs.operational hs.process-extras hs.shell-escape
-    hs.tasty hs.tasty-hunit hs.tasty-th hs.retry hs.data-default-class
-    hs.split
-
-    pkgs.openssh pkgs.curl hs.pandoc
+    base bytestring data-default-class operational process-extras retry
+    shell-escape split transformers
   ];
+  testDepends = [ base bytestring tasty tasty-hunit tasty-th ];
+  homepage = "https://github.com/utdemir/handsy";
+  description = "A DSL to describe common shell operations and interpeters for running them locally and remotely";
+  license = stdenv.lib.licenses.bsd3;
 }
