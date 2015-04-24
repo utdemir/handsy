@@ -1,14 +1,14 @@
-{ mkDerivation, base, bytestring, data-default-class, operational
-, process-extras, retry, shell-escape, split, stdenv, tasty
-, tasty-hunit, tasty-th, transformers
+{ mkDerivation, base, bytestring, data-default-class, errors
+, lifted-base, operational, process-extras, retry, shell-escape
+, split, stdenv, tasty, tasty-hunit, tasty-th, transformers
 }:
 mkDerivation {
   pname = "handsy";
   version = "0.0.13";
   src = ./.;
   buildDepends = [
-    base bytestring data-default-class operational process-extras retry
-    shell-escape split transformers
+    base bytestring data-default-class errors lifted-base operational
+    process-extras retry shell-escape split transformers
   ];
   testDepends = [ base bytestring tasty tasty-hunit tasty-th ];
   homepage = "https://github.com/utdemir/handsy";

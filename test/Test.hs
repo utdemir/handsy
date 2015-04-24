@@ -1,15 +1,14 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module Main where
 
-import           System.Handsy              as H
+import           Prelude                    hiding (appendFile, readFile,
+                                             writeFile)
 
-{- These aren't currently used in tests, but I
-   import them for coverage reports. -}
-import           System.Handsy.Remote       as H
-import           System.Handsy.Util         as H
+import           System.Handsy
 
 import           Control.Applicative
 import qualified Data.ByteString.Lazy       as B
@@ -23,58 +22,67 @@ arbitraryBinary :: B.ByteString
 arbitraryBinary = B.pack [1..255]
 
 case_writeFile = do
-  f <- H.run def $ do
+  f <- run def $ do
     tmp <- mkTemp ""
-    H.writeFile tmp arbitraryBinary
+    writeFile tmp arbitraryBinary
     return tmp
-  ret <- B.readFile f
-  assertEqual "" arbitraryBinary ret
+  case f of
+    Right fname -> B.readFile fname >>= assertEqual "" arbitraryBinary
+    Left  err   -> assertFailure err
 
 case_readFile = do
-  tmp <- H.run def $ mkTemp ""
-  B.writeFile tmp arbitraryBinary
-  ret <- H.run def $ H.readFile tmp
-  assertEqual "" arbitraryBinary ret
+  run def (mkTemp "") >>= \case
+    Left  err -> assertFailure err
+    Right tmp -> do
+      B.writeFile tmp arbitraryBinary
+      run def (readFile tmp) >>= \case
+        Left  err -> assertFailure err
+        Right ret -> assertEqual "" arbitraryBinary ret
 
 case_appendFile = do
-  ret <- H.run def $ do
+  ret <- run def $ do
     tmp <- mkTemp ""
 
-    H.writeFile tmp "ut"
-    H.appendFile tmp "demir"
+    writeFile tmp "ut"
+    appendFile tmp "demir"
 
-    H.readFile tmp
+    readFile tmp
 
-  assertEqual "" "utdemir" ret
+  either assertFailure (assertEqual "" "utdemir") ret
 
 case_shell = do
-  (h1, h2) <- H.run def $ do
+  ret <- run def $ do
     tmp <- mkTemp ""
 
-    H.writeFile tmp (B.pack [1..255])
+    writeFile tmp (B.pack [1..255])
 
     h1 <- takeWhile isHexDigit . C.unpack . fst <$> command_ "md5sum" [tmp] def
     h2 <- takeWhile isHexDigit . C.unpack . fst <$> shell_ ("cat " ++ tmp ++ " | md5sum -") def
     return (h1, h2)
 
-  assertEqual "" h1 h2
+  case ret of
+    Left err       -> assertFailure err
+    Right (h1, h2) -> assertEqual "" h1 h2
 
 case_exit = do
-  (e1, e2) <- H.run def $ do
+  ret <- run def $ do
     (e1, _, _) <- command "grep" [] def
     (e2, _, _) <- command "id" [] def
     return (e1, e2)
 
-  case (e1, e2) of
-    (ExitFailure _, ExitSuccess) -> return ()
-    _ -> assertFailure $ "Invalid return values: " ++ show (e1, e2)
+  case ret of
+    Right (ExitFailure _, ExitSuccess) -> return ()
+    other -> assertFailure $ "Invalid return values: " ++ show other
 
 case_cwd = do
-  (temp, pwd) <- H.run def $ do
+  ret <- run def $ do
     temp <- mkTempDir ""
     pwd:[] <- strLines . stdout <$> command_ "pwd" [] def{cwd=temp}
     return (temp, pwd)
-  assertEqual "" temp pwd
+
+  case ret of
+    Right (temp, pwd) -> assertEqual "" temp pwd
+    other -> assertFailure $ "Invalid paths: " ++ show other
 
 main :: IO ()
 main = $(defaultMainGenerator)

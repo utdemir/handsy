@@ -9,8 +9,6 @@ module System.Handsy.Tutorial (
     ) where
 
 import           System.Handsy
-import           System.Handsy.Remote
-import           System.Handsy.Util
 
 {- $introduction
     @handsy@ is a small library mainly for applications which should make some
