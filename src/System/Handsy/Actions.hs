@@ -114,13 +114,15 @@ sleep = liftIO . threadDelay . (* 1000000)
 
 -- | Creates a temporary file
 mkTemp :: String -> Handsy String
-mkTemp suffix = head . strLines . fst
-                  <$> command_ "mktemp" (bool ["--suffix=" ++ suffix] [] (null suffix)) def
+mkTemp suffix = do
+  out <- strLines .stdout <$> command_ "mktemp" (bool ["--suffix=" ++ suffix] [] (null suffix)) def
+  lift $ tryHead ("weird output from mktemp: " ++ show out) out
 
 -- | Creates a temporary directory
 mkTempDir :: String -> Handsy String
-mkTempDir suffix = head . strLines . fst
-                  <$> command_ "mktemp" ("-d" : bool ["--suffix" ++ suffix] [] (null suffix)) def
+mkTempDir suffix
+  = command_ "mktemp" ("-d" : bool ["--suffix" ++ suffix] [] (null suffix)) def
+    >>= lift . tryHead "weird output from mktemp" . strLines . stdout
 
 -- | Returns if the specified process is running. Uses `pidof`
 isRunning :: String -> Handsy Bool
