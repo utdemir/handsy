@@ -12,6 +12,7 @@ import           Control.Monad
 import           Control.Retry
 import qualified Data.ByteString.Lazy   as B
 import           Data.Default.Class
+import           Data.Monoid
 import           System.Exit
 import           System.Handsy.Actions
 import           System.Handsy.Internal
