@@ -22,25 +22,28 @@ type Host = String
 data SSHOptions =
   SSHOptions {
     -- | Path of `ssh` command
-    sshPath       :: FilePath,
+    sshPath        :: FilePath,
 
     -- | User
-    sshUser       :: Maybe String,
+    sshUser        :: Maybe String,
 
     -- | Port to connect
-    sshPort       :: Int,
+    sshPort        :: Int,
 
     -- | Identity file to use
-    identityFile  :: Maybe FilePath,
+    identityFile   :: Maybe FilePath,
+
+    -- | Connect timeout
+    connectTimeout :: Int,
 
     {-| Whether to use control master for SSH connections.
         This significantly reduces execution time.
     -}
-    controlMaster :: Bool
+    controlMaster  :: Bool
   }
 
 instance Default SSHOptions where
-  def = SSHOptions "ssh" Nothing 22 Nothing True
+  def = SSHOptions "ssh" Nothing 22 Nothing 30 True
 
 acquireCM :: Host -> SSHOptions -> Script FilePath
 acquireCM host opts = do
@@ -66,7 +69,8 @@ releaseCM p = (scriptIO . run def{debug=False} $ void $ command_ "rm" ["-f", p] 
 
 genSsh :: SSHOptions -> Maybe FilePath -> (FilePath, [String])
 genSsh opts cm = (sshPath opts,
-                  [ "-p", show $ sshPort opts]
+                  [ "-p", show $ sshPort opts
+                  , "-o", "ConnectTimeout=" ++ show (connectTimeout opts)]
                   <> maybe mempty (("-l":) . pure) (sshUser opts)
                   <> maybe mempty (("-i":) . pure) (identityFile opts)
                   <> maybe mempty (("-S":) . pure) cm
