@@ -37,7 +37,7 @@ shell :: String       -- ^ String to execute
       -> Handsy (ExitCode, BL.ByteString, BL.ByteString) -- ^ (ExitCode, Stdout, Stderr)
 shell cmd opts = let esc = B8.unpack . bytes . bash . B8.pack
                      CommandOptions stdin' cwd' = opts
-                 in  shellF (if null cwd' then "" else ("cd " ++ esc cwd' ++ "; ") ++ cmd) stdin'
+                 in  shellF ((if null cwd' then "" else ("cd " ++ esc cwd' ++ "; ")) ++ cmd) stdin'
 
 data CommandOptions =
   CommandOptions { stdin :: BL.ByteString
